@@ -1,61 +1,69 @@
-# CodeIgniter 4 Framework
+# LoakIN
 
-## What is CodeIgniter?
+Platform web yang mempertemukan **penyetor** (pemilik barang bekas/rusak) dengan **pendaur ulang**.
+Dibangun dengan CodeIgniter 4.7 (PHP 8.2+), MySQL, tanpa library JavaScript.
+Web hanya menghubungkan dan mencatat; barang dan uang berpindah langsung antar pengguna.
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+## Menjalankan (XAMPP / Laragon)
 
-This repository holds the distributable version of the framework.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+1. Pastikan PHP 8.2+ dengan ekstensi `intl`, `mbstring`, `mysqli`, `gd` aktif (php.ini).
+2. Buat database kosong bernama `loakin` di phpMyAdmin (collation `utf8mb4_general_ci`).
+3. Cek `.env` (default: user `root`, tanpa password, database `loakin`).
+4. Di folder proyek:
+   ```
+   php spark migrate
+   php spark db:seed DatabaseSeeder     # kategori + akun admin
+   php spark db:seed DemoSeeder         # opsional: data contoh untuk demo
+   php spark serve
+   ```
+5. Buka http://localhost:8080
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+## Akun
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+| Peran | Email | Password |
+|---|---|---|
+| Admin | admin@loakin.test | admin12345 |
+| Penyetor (demo) | sari@loakin.test, budi@loakin.test | password123 |
+| Pendaur terverifikasi (demo) | hijau@loakin.test, kriya@loakin.test | password123 |
+| Pendaur menunggu verifikasi (demo) | dedi@loakin.test | password123 |
 
-## Important Change with index.php
+Ganti password admin sebelum dipakai sungguhan.
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+## Kedaluwarsa otomatis
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+```
+php spark listings:expire
+```
+Jadwalkan harian (cron / Windows Task Scheduler). Listing "Tersedia" yang tidak diambil
+`Config\Loakin::$expireDays` hari (default 14) menjadi "Kedaluwarsa" dan penyetor diberi notifikasi.
 
-**Please** read the user guide for a better explanation of how CI4 works!
+## Struktur
 
-## Repository Management
+```
+app/Config/Loakin.php        pengaturan aplikasi (masa tayang, label status, batas foto)
+app/Config/Routes.php        semua route, dikelompokkan per peran
+app/Controllers/             Auth, Home, Listing, Offer, Message, Rating, Notification, Impact, Profile
+app/Controllers/Admin/       Dashboard, Users, Verification, Categories
+app/Models/                  User, Category, Listing, ListingImage, Offer, Message, Notification, Rating
+app/Libraries/OfferService   seluruh aturan transaksi & status
+app/Libraries/               NotificationService, ImpactCalculator, ImageUploader
+app/Filters/                 AuthFilter, GuestFilter, RoleFilter
+app/Database/Migrations/     8 tabel
+app/Database/Seeds/          Category, Admin, Demo
+app/Commands/ExpireListings  php spark listings:expire
+app/Views/                   layouts, partials, dan halaman per fitur
+public/assets/               CSS & JS
+```
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+## Alur status
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+```
+Barang : Tersedia -> Diproses -> Selesai      (atau Dibatalkan / Kedaluwarsa)
+Pengajuan : Menunggu <-> Counter -> Diterima -> Selesai   (atau Ditolak / Dibatalkan)
+```
 
-## Contributing
+## Rencana pengembangan (belum dikodekan, sesuai dokumen konsep)
 
-We welcome contributions from the community.
-
-Please read the [*Contributing to CodeIgniter*](https://github.com/codeigniter4/CodeIgniter4/blob/develop/CONTRIBUTING.md) section in the development repository.
-
-## Server Requirements
-
-PHP version 8.2 or higher is required, with the following extensions installed:
-
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
-
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - The end of life date for PHP 8.1 was December 31, 2025.
-> - If you are still using below PHP 8.2, you should upgrade immediately.
-> - The end of life date for PHP 8.2 will be December 31, 2026.
-
-Additionally, make sure that the following extensions are enabled in your PHP:
-
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+Payment gateway + rekening bersama (Midtrans/Xendit), integrasi kurir (Biteship/RajaOngkir),
+chat real-time (WebSocket), arah "permintaan" (pendaur memposting kebutuhan), listing premium,
+langganan pendaur bisnis, komisi 3-5%.

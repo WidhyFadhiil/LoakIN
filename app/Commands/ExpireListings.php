@@ -2,60 +2,29 @@
 
 namespace App\Commands;
 
+use App\Libraries\OfferService;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
+/**
+ * Auto-kedaluwarsa: listing "Tersedia" yang tidak ada yang mengambil selama N hari
+ * (config Loakin::$expireDays, default 14) berubah menjadi "Kedaluwarsa" dan penyetor diberi notifikasi.
+ *
+ * Jalankan harian lewat cron / Task Scheduler:
+ *     php spark listings:expire
+ */
 class ExpireListings extends BaseCommand
 {
-    /**
-     * The Command's Group
-     *
-     * @var string
-     */
-    protected $group = 'LoakIN';
+    protected $group       = 'LoakIN';
+    protected $name        = 'listings:expire';
+    protected $description = 'Ubah listing yang tidak diambil selama N hari menjadi Kedaluwarsa dan kirim notifikasi.';
+    protected $usage       = 'listings:expire';
+    protected $arguments   = [];
+    protected $options     = [];
 
-    /**
-     * The Command's Name
-     *
-     * @var string
-     */
-    protected $name = 'listings:expire';
-
-    /**
-     * The Command's Description
-     *
-     * @var string
-     */
-    protected $description = '';
-
-    /**
-     * The Command's Usage
-     *
-     * @var string
-     */
-    protected $usage = 'listings:expire [arguments] [options]';
-
-    /**
-     * The Command's Arguments
-     *
-     * @var array
-     */
-    protected $arguments = [];
-
-    /**
-     * The Command's Options
-     *
-     * @var array
-     */
-    protected $options = [];
-
-    /**
-     * Actually execute a command.
-     *
-     * @param array $params
-     */
     public function run(array $params)
     {
-        //
+        $n = (new OfferService())->expireListings();
+        CLI::write($n . ' listing dikedaluwarsakan.', $n > 0 ? 'yellow' : 'green');
     }
 }
