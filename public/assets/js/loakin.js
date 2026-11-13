@@ -1,14 +1,36 @@
 /* LoakIN - JavaScript ringan (tanpa library) */
 (function () {
-  // Menu mobile
-  var toggle = document.querySelector('.nav-toggle');
-  if (toggle) {
-    toggle.addEventListener('click', function () {
-      var nav = document.querySelector('.nav');
-      var open = nav.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
+  // Menu samping (drawer kiri)
+  var drawer = document.getElementById('drawer');
+  var scrim = document.getElementById('scrim');
+  var openBtn = document.getElementById('menu-open');
+  var closeBtn = document.getElementById('menu-close');
+  function setDrawer(open) {
+    if (!drawer) { return; }
+    drawer.classList.toggle('open', open);
+    drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+    if (open) { drawer.removeAttribute('inert'); } else { drawer.setAttribute('inert', ''); }
+    scrim.hidden = !open;
+    document.body.classList.toggle('no-scroll', open);
+    openBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    (open ? closeBtn : openBtn).focus();
   }
+  if (drawer && openBtn) {
+    openBtn.addEventListener('click', function () { setDrawer(true); });
+    closeBtn.addEventListener('click', function () { setDrawer(false); });
+    scrim.addEventListener('click', function () { setDrawer(false); });
+  }
+
+  // Dropdown akun: tutup saat klik di luar atau tekan Esc
+  var userMenu = document.querySelector('.user-menu');
+  document.addEventListener('click', function (e) {
+    if (userMenu && userMenu.open && !userMenu.contains(e.target)) { userMenu.open = false; }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') { return; }
+    if (drawer && drawer.classList.contains('open')) { setDrawer(false); }
+    if (userMenu && userMenu.open) { userMenu.open = false; userMenu.querySelector('summary').focus(); }
+  });
 
   // Konfirmasi untuk tombol berbahaya: <form data-confirm="Yakin?">
   document.addEventListener('submit', function (e) {
